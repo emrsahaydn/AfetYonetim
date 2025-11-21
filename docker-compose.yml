@@ -1,0 +1,51 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: carelink-mssql
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=CareLink123!
+      - MSSQL_PID=Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+    networks:
+      - carelink-network
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 3 bash -c '</dev/tcp/localhost/1433' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: carelink-backend
+    environment:
+      - DB_SERVER=mssql
+      - DB_PORT=1433
+      - DB_NAME=CareLinkDB
+      - DB_USER=sa
+      - DB_PASSWORD=CareLink123!
+      - PORT=5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      mssql:
+        condition: service_healthy
+    networks:
+      - carelink-network
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+networks:
+  carelink-network:
+    driver: bridge
+
+volumes:
+  mssql_data:
+
