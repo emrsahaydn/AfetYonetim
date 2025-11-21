@@ -42,6 +42,23 @@ services:
       - ./backend:/app
       - /app/node_modules
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: carelink-frontend
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - carelink-network
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
 networks:
   carelink-network:
     driver: bridge
